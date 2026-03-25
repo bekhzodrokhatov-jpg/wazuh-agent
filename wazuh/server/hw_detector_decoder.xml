@@ -1,11 +1,14 @@
-<!-- HW-Detector Custom Decoder for Wazuh -->
+<!-- HW-Detector Custom Decoder for Wazuh v4.0 (Fixed) -->
 <!-- Joylash: /var/ossec/etc/decoders/hw_detector_decoder.xml -->
 
-<decoder name="hw_detector">
-  <prematch>^hw_detector: </prematch>
+<!-- HW-Detector scan natijasi (agent dan keladi) -->
+<decoder name="hw_detector_manual">
+  <prematch>hw_detector:</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
 </decoder>
 
-<decoder name="hw_detector_json">
-  <parent>hw_detector</parent>
+<!-- Hardware o'zgarishi alerti (server Python skriptidan keladi) -->
+<decoder name="hw_change_manual">
+  <prematch>hw_change:</prematch>
   <plugin_decoder>JSON_Decoder</plugin_decoder>
 </decoder>
