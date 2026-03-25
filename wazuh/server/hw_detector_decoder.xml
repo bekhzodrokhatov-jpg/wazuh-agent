@@ -1,0 +1,11 @@
+<!-- HW-Detector Custom Decoder for Wazuh -->
+<!-- Joylash: /var/ossec/etc/decoders/hw_detector_decoder.xml -->
+
+<decoder name="hw_detector">
+  <prematch>^hw_detector: </prematch>
+</decoder>
+
+<decoder name="hw_detector_json">
+  <parent>hw_detector</parent>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

@@ -1,0 +1,63 @@
+<!-- HW-Detector Custom Rules for Wazuh -->
+<!-- Joylash: /var/ossec/etc/rules/hw_detector_rules.xml -->
+
+<group name="hw_detector,">
+
+  <!-- Asosiy rule - har qanday HW-Detector log -->
+  <rule id="100100" level="3">
+    <decoded_as>hw_detector</decoded_as>
+    <description>HW-Detector: Hardware tekshiruvi amalga oshirildi</description>
+  </rule>
+
+  <!-- TAMPERED - hardware soxtalashtirilgan! -->
+  <rule id="100101" level="12">
+    <if_sid>100100</if_sid>
+    <field name="verdict">TAMPERED</field>
+    <description>HW-DETECTOR OGOHLANTIRISH: $(hostname) da hardware soxtalashtirish aniqlandi! Fraud: $(fraud_count) ta nomuvofiqlik</description>
+    <options>alert_by_email</options>
+    <group>hw_fraud,</group>
+  </rule>
+
+  <!-- CLEAN - hamma narsa joyida -->
+  <rule id="100102" level="3">
+    <if_sid>100100</if_sid>
+    <field name="verdict">CLEAN</field>
+    <description>HW-Detector: $(hostname) da hardware malumotlari mos - muammo topilmadi</description>
+  </rule>
+
+  <!-- CPU soxtalashtirish -->
+  <rule id="100103" level="14">
+    <if_sid>100101</if_sid>
+    <field name="cpu.tampered">true</field>
+    <description>HW-DETECTOR XAVF: $(hostname) da CPU ALMASHTIRILGAN! Haqiqiy: $(cpu.real_cpuid) / WMI korsatmoqda: $(cpu.reported_wmi)</description>
+    <options>alert_by_email</options>
+    <group>hw_fraud,cpu_tampered,</group>
+  </rule>
+
+  <!-- RAM soxtalashtirish -->
+  <rule id="100104" level="14">
+    <if_sid>100101</if_sid>
+    <field name="ram.tampered">true</field>
+    <description>HW-DETECTOR XAVF: $(hostname) da RAM ALMASHTIRILGAN! Haqiqiy: $(ram.real_kernel_gb)GB / WMI korsatmoqda: $(ram.reported_wmi_gb)GB</description>
+    <options>alert_by_email</options>
+    <group>hw_fraud,ram_tampered,</group>
+  </rule>
+
+  <!-- CPU va RAM ikkalasi ham soxtalashtirish -->
+  <rule id="100105" level="15">
+    <if_sid>100101</if_sid>
+    <field name="cpu.tampered">true</field>
+    <field name="ram.tampered">true</field>
+    <description>HW-DETECTOR KRITIK: $(hostname) da CPU VA RAM IKKALASI HAM ALMASHTIRILGAN!</description>
+    <options>alert_by_email</options>
+    <group>hw_fraud,critical_tamper,</group>
+  </rule>
+
+  <!-- Skript xatosi -->
+  <rule id="100110" level="5">
+    <decoded_as>hw_detector</decoded_as>
+    <field name="error">\.+</field>
+    <description>HW-Detector: Skript xatosi - $(error)</description>
+  </rule>
+
+</group>
