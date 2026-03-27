@@ -142,5 +142,14 @@ $jsonOutput = $result | ConvertTo-Json -Depth 5 -Compress
 Write-Output ("hw_detector: " + $jsonOutput)
 
 # WRITE TO FILE FOR WAZUH
-$logPath = "C:\Program Files (x86)\ossec-agent\hw_detector.json"
-Out-File -FilePath $logPath -InputObject $jsonOutput -Encoding ASCII
+# Use ProgramData to avoid permission issues under Program Files.
+$outputDir = "C:\ProgramData\ossec-agent"
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+# 1) Latest snapshot for quick inspection
+$snapshotPath = Join-Path $outputDir "hw_detector.json"
+Set-Content -Path $snapshotPath -Value $jsonOutput -Encoding ASCII
+
+# 2) Append-only log for reliable localfile collection
+$logPath = Join-Path $outputDir "hw_detector.log"
+Add-Content -Path $logPath -Value $jsonOutput -Encoding ASCII

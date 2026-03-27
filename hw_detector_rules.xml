@@ -1,0 +1,17 @@
+<group name="hw_fraud,">
+  <rule id="100101" level="12">
+    <decoded_as>json</decoded_as>
+    <field name="scan_type">hw_fraud_detection</field>
+    <field name="verdict">TAMPERED</field>
+    <description>TAMPERED: Hardware spoofing detected!</description>
+    <group>hw_detector</group>
+  </rule>
+
+  <rule id="100102" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="scan_type">hw_fraud_detection</field>
+    <field name="verdict">CLEAN</field>
+    <description>CLEAN: Hardware check passed.</description>
+    <group>hw_detector</group>
+  </rule>
+</group>

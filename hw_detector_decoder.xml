@@ -1,0 +1,12 @@
+<decoder name="hw_detector_decoder">
+  <program_name>^ossec-agent$</program_name>
+  <type>json</type>
+  <json_path>data.scan_type</json_path>
+  <json_value>hw_fraud_detection</json_value>
+</decoder>
+<decoder name="hw_change_decoder">
+  <program_name>^ossec-agent$</program_name>
+  <type>json</type>
+  <json_path>scan_type</json_path>
+  <json_value>hw_change_detection</json_value>
+</decoder>

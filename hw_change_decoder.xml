@@ -1,0 +1,8 @@
+<decoder name="hw_change_json">
+  <prematch>^{"scan_type":"hw_change_detection"</prematch>
+</decoder>
+
+<decoder name="hw_change_json_fields">
+  <parent>hw_change_json</parent>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
