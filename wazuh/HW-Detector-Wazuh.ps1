@@ -95,13 +95,27 @@ public class HWDetect
 
 Add-Type -TypeDefinition $csCode -ErrorAction SilentlyContinue
 
+function Normalize-CpuName {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return ""
+    }
+
+    return (($Value -replace '\s+', ' ').Trim().ToLowerInvariant())
+}
+
 # CPU INFO
 $real_cpu = [HWDetect]::CpuBrand()
 $wmi_cpu = (Get-WmiObject Win32_Processor).Name
 $reg_cpu = (Get-ItemProperty "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0").ProcessorNameString -replace '\s+', ' '
 
-$cpu_tampered = ($real_cpu -ne $wmi_cpu)
-$reg_tampered = ($wmi_cpu -ne $reg_cpu)
+$real_cpu_norm = Normalize-CpuName $real_cpu
+$wmi_cpu_norm = Normalize-CpuName $wmi_cpu
+$reg_cpu_norm = Normalize-CpuName $reg_cpu
+
+$cpu_tampered = ($real_cpu_norm -ne $wmi_cpu_norm)
+$reg_tampered = ($real_cpu_norm -ne $reg_cpu_norm)
 
 # RAM INFO
 $wmi_ram = Get-WmiObject Win32_PhysicalMemory
