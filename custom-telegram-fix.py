@@ -69,7 +69,6 @@ def _load_state():
     state = _read_json(STATE_PATH)
     if not isinstance(state, dict):
         state = {}
-    state.setdefault("verdict_by_host", {})
     state.setdefault("hw_change_batches", {})
     return state
 
@@ -281,9 +280,6 @@ def main():
 
     if scan_type == "hw_fraud_detection":
         verdict = data.get("verdict", "UNKNOWN")
-        prev = state["verdict_by_host"].get(hostname)
-        if prev == verdict:
-            return
 
         cpu = data.get("cpu", {}) if isinstance(data.get("cpu"), dict) else {}
         ram = data.get("ram", {}) if isinstance(data.get("ram"), dict) else {}
@@ -303,8 +299,6 @@ def main():
             [],
         )
         _send_telegram(message, timestamp)
-        state["verdict_by_host"][hostname] = verdict
-        _save_state(state)
         return
 
     change_time = data.get("change_time", "")
