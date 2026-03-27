@@ -69,17 +69,43 @@ def _load_state():
     state = _read_json(STATE_PATH)
     if not isinstance(state, dict):
         state = {}
+    state.setdefault("fraud_signature_by_host", {})
     state.setdefault("hw_change_batches", {})
     return state
 
 
 def _save_state(state):
     # Keep state bounded so /tmp does not grow forever.
+    fraud = state.get("fraud_signature_by_host", {})
+    if len(fraud) > 2000:
+        keep_keys = list(fraud.keys())[-1000:]
+        state["fraud_signature_by_host"] = {k: fraud[k] for k in keep_keys}
+
     batches = state.get("hw_change_batches", {})
     if len(batches) > 1000:
         keep = dict(sorted(batches.items(), key=lambda kv: kv[1], reverse=True)[:500])
         state["hw_change_batches"] = keep
     _write_json(STATE_PATH, state)
+
+
+def _fraud_signature(data):
+    cpu = data.get("cpu", {}) if isinstance(data.get("cpu"), dict) else {}
+    ram = data.get("ram", {}) if isinstance(data.get("ram"), dict) else {}
+    gpu = data.get("gpu", {}) if isinstance(data.get("gpu"), dict) else {}
+
+    payload = {
+        "scan_type": data.get("scan_type", ""),
+        "verdict": data.get("verdict", "UNKNOWN"),
+        "tampered": bool(data.get("tampered")),
+        "registry_tampered": bool(data.get("registry_tampered") or cpu.get("registry_tampered")),
+        "cpu_real": cpu.get("real") or cpu.get("real_cpuid") or "",
+        "cpu_reported_registry": cpu.get("reported_registry") or "",
+        "cpu_reported_wmi": cpu.get("reported_wmi") or "",
+        "ram_total_gb": ram.get("total_gb") or ram.get("real_smbios_gb") or "",
+        "ram_stick_count": ram.get("stick_count") or 0,
+        "gpu_name": gpu.get("name") or gpu.get("description") or "",
+    }
+    return json.dumps(payload, sort_keys=True, ensure_ascii=False)
 
 
 def _latest_inventory(agent_id, hostname):
@@ -280,6 +306,10 @@ def main():
 
     if scan_type == "hw_fraud_detection":
         verdict = data.get("verdict", "UNKNOWN")
+        signature = _fraud_signature(data)
+        prev_signature = state["fraud_signature_by_host"].get(hostname)
+        if prev_signature == signature:
+            return
 
         cpu = data.get("cpu", {}) if isinstance(data.get("cpu"), dict) else {}
         ram = data.get("ram", {}) if isinstance(data.get("ram"), dict) else {}
@@ -299,6 +329,8 @@ def main():
             [],
         )
         _send_telegram(message, timestamp)
+        state["fraud_signature_by_host"][hostname] = signature
+        _save_state(state)
         return
 
     change_time = data.get("change_time", "")
