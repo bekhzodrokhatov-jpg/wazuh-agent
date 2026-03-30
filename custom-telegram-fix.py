@@ -12,6 +12,7 @@ CHAT_ID = "-1003744477260"
 DB_PATH = "/var/ossec/var/db/hw_inventory.db"
 STATE_PATH = "/tmp/custom_telegram_state.json"
 LOG_PATH = "/tmp/telegram.log"
+TELEGRAM_RULE_IDS = {"100101", "100103", "100112", "100201", "100202"}
 
 
 def _read_json(path):
@@ -294,8 +295,18 @@ def main():
 
     data = _extract_data(alert)
     scan_type = data.get("scan_type")
+    rule_id = str(alert.get("rule", {}).get("id", "")).strip()
+
+    # Some alerts (notably 100112) may arrive without scan_type in parsed data.
     if scan_type not in ("hw_fraud_detection", "hw_change_detection"):
-        return
+        if rule_id and rule_id not in TELEGRAM_RULE_IDS:
+            return
+        if rule_id in ("100101", "100103", "100112"):
+            scan_type = "hw_fraud_detection"
+        elif rule_id in ("100201", "100202"):
+            scan_type = "hw_change_detection"
+        else:
+            return
 
     agent_name = alert.get("agent", {}).get("name", "Manager")
     hostname = data.get("hostname") or agent_name

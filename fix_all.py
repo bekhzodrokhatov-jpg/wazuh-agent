@@ -40,18 +40,19 @@ ossec_path = '/var/ossec/etc/ossec.conf'
 with open(ossec_path, 'r') as f:
     ossec_content = f.read()
 
-# Check if rule_ids already include 100201 and 100202
-if '100201' in ossec_content and '100202' in ossec_content:
-    results.append("[OK] ossec.conf already has rule_ids 100201, 100202")
+# Check if rule_ids already include all required Telegram rules
+required_rule_ids = ['100101', '100103', '100112', '100201', '100202']
+if all(rid in ossec_content for rid in required_rule_ids):
+    results.append("[OK] ossec.conf already has rule_ids 100101, 100103, 100112, 100201, 100202")
 else:
     # Replace the rule_id line - find <rule_id>100101</rule_id>
     old_rule = '<rule_id>100101</rule_id>'
-    new_rule = '<rule_id>100101, 100201, 100202</rule_id>'
+    new_rule = '<rule_id>100101, 100103, 100112, 100201, 100202</rule_id>'
     if old_rule in ossec_content:
         ossec_content = ossec_content.replace(old_rule, new_rule)
         with open(ossec_path, 'w') as f:
             f.write(ossec_content)
-        results.append("[OK] ossec.conf updated with rule_ids 100201, 100202")
+        results.append("[OK] ossec.conf updated with rule_ids 100101, 100103, 100112, 100201, 100202")
     else:
         # Try to find any rule_id line in integrations section
         import re
@@ -65,14 +66,18 @@ else:
             match = re.search(pattern2, ossec_content, re.DOTALL)
             if match:
                 current_ids = match.group(2)
-                if '100201' not in current_ids:
-                    new_ids = current_ids.strip() + ', 100201, 100202'
+                merged = []
+                for rid in [x.strip() for x in current_ids.split(',') if x.strip()] + required_rule_ids:
+                    if rid not in merged:
+                        merged.append(rid)
+                new_ids = ', '.join(merged)
+                if new_ids != current_ids.strip():
                     ossec_content = ossec_content[:match.start(2)] + new_ids + ossec_content[match.end(2):]
                     with open(ossec_path, 'w') as f:
                         f.write(ossec_content)
                     results.append(f"[OK] ossec.conf rule_id updated: {new_ids}")
                 else:
-                    results.append("[OK] ossec.conf already has 100201")
+                    results.append("[OK] ossec.conf already has required Telegram rule_ids")
             else:
                 results.append("[WARN] Could not find rule_id in custom-telegram block")
         else:
