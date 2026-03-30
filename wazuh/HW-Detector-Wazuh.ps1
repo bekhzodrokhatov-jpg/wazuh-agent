@@ -166,4 +166,14 @@ Set-Content -Path $snapshotPath -Value $jsonOutput -Encoding ASCII
 
 # 2) Append-only log for reliable localfile collection
 $logPath = Join-Path $outputDir "hw_detector.log"
-Add-Content -Path $logPath -Value $jsonOutput -Encoding ASCII
+try {
+    $stream = [System.IO.File]::Open($logPath, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+    $writer = [System.IO.StreamWriter]::new($stream, [System.Text.Encoding]::ASCII)
+    $writer.WriteLine($jsonOutput)
+    $writer.Close()
+    $stream.Close()
+} catch {
+    # Fallback: write to temp then move
+    $tmpPath = "$logPath.tmp"
+    [System.IO.File]::AppendAllText($tmpPath, "$jsonOutput`n", [System.Text.Encoding]::ASCII)
+}
